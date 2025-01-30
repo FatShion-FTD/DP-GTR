@@ -1,0 +1,182 @@
+
+25% Tokens Avoid lowest ppl reference ICL all_clip Experiment:
+Config: {'max_new_tokens': 39, 'do_sample': True, 'temperature': 0.25072575999999996, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7fd623f11370>]}
+TinyLlama/TinyLlama-1.1B-Chat-v1.0 S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.8569281771700962; rouge2 mean: 0.7809266532819908; rougeL mean: 0.8389663809371861
+rouge1 std: 0.009383955831048786; rouge2 std: 0.011813319240653184; rougeL std: 0.01021758864753628
+bleu mean: 0.727268877529672
+bleu std: 0.017386520104191342
+Answer paraphrased S1:
+rouge1 mean: 0.5267191512714803; rouge2 mean: 0.29332609694936895; rougeL mean: 0.525594548093485
+rouge1 std: 0.014741892136550609; rouge2 std: 0.00931787983326524; rougeL std: 0.014898753519898732
+bleu mean: 0.2005879126173344
+bleu std: 0.010161036342478428
+S2 Question generated:
+BLEU MEAN Question: 0.4680270334573957 STD Question: 0.007600096946211562
+ROUGE1 MEAN Question: 0.5993716786245766 STD Question: 0.0032106193067703865
+ROUGE2 MEAN Question: 0.48108157093114756 STD Question: 0.0009753950486867669
+ROUGEL MEAN Question: 0.574387139504646 STD Question: 0.0017976306267859098
+S2 Answer generated:
+BLEU MEAN Answer: 0.13186963889012449 STD Answer: 0.0054939795618348134
+ROUGE1 MEAN Answer: 0.5276749286136608 STD Answer: 0.0043314443218950335
+ROUGE2 MEAN Answer: 0.3344185051043624 STD Answer: 0.009832055749645772
+ROUGEL MEAN Answer: 0.5236928321116748 STD Answer: 0.004289931161491846
+
+25% Tokens Avoid lowest ppl reference ICL all_clip Experiment:
+Config: {'max_new_tokens': 64, 'do_sample': True, 'temperature': 0.19076405333333335, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'pad_token_id': 128001, 'eos_token_id': 128001, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7fd6006d3550>]}
+meta-llama/Llama-3.2-1B S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.8561139432016927; rouge2 mean: 0.8270635926529973; rougeL mean: 0.8507929702381225
+rouge1 std: 0.004029740285221931; rouge2 std: 0.005343267125098034; rougeL std: 0.004578907076680592
+bleu mean: 0.6113857057029236
+bleu std: 0.008585031037353266
+Answer paraphrased S1:
+rouge1 mean: 0.582305797115022; rouge2 mean: 0.33680643694509577; rougeL mean: 0.5810349052172978
+rouge1 std: 0.006135725741239792; rouge2 std: 0.004242709332172983; rougeL std: 0.00605876793156963
+bleu mean: 0.19924142984553528
+bleu std: 0.006361060992498464
+S2 Question generated:
+BLEU MEAN Question: 0.425131511253146 STD Question: 0.011803472978804307
+ROUGE1 MEAN Question: 0.7575081052542325 STD Question: 0.009358274691686251
+ROUGE2 MEAN Question: 0.717504369165229 STD Question: 0.011209184540289688
+ROUGEL MEAN Question: 0.7522559075484562 STD Question: 0.010241457779678867
+S2 Answer generated:
+BLEU MEAN Answer: 0.18748782709481085 STD Answer: 0.020676078942976763
+ROUGE1 MEAN Answer: 0.573034259216029 STD Answer: 0.010050895346335749
+ROUGE2 MEAN Answer: 0.3633300295131779 STD Answer: 0.005811935505506757
+ROUGEL MEAN Answer: 0.5726789979123402 STD Answer: 0.010767490726928489
+
+25% Tokens Avoid lowest ppl reference ICL all_clip Experiment:
+Config: {'max_new_tokens': 35, 'do_sample': True, 'temperature': 0.25072575999999996, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7f42dffc6ee0>]}
+TinyLlama/TinyLlama-1.1B-Chat-v1.0 S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.9377250360272914; rouge2 mean: 0.8643840579710145; rougeL mean: 0.9144520605334369
+rouge1 std: 0.008013034693716939; rouge2 std: 0.021045976705955382; rougeL std: 0.00786965404028946
+bleu mean: 0.8437668896808606
+bleu std: 0.027544589945707586
+Answer paraphrased S1:
+rouge1 mean: 0.4912829594647776; rouge2 mean: 0.22089390142021725; rougeL mean: 0.49460842188114906
+rouge1 std: 0.0328072338926613; rouge2 std: 0.013687352178222534; rougeL std: 0.031753992462292414
+bleu mean: 0.15416657922875107
+bleu std: 0.027269344581589233
+
+PTR Avoid lowest ppl reference ICL Experiment:
+Config: {'max_new_tokens': 37, 'do_sample': True, 'temperature': 0.25072575999999996, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7f95859a1d00>]}
+TinyLlama/TinyLlama-1.1B-Chat-v1.0 S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.8606108608663192; rouge2 mean: 0.7918109575325487; rougeL mean: 0.8448949990399931
+rouge1 std: 0.01222353572266168; rouge2 std: 0.014222716095480233; rougeL std: 0.011184615603871625
+bleu mean: 0.7368766015752669
+bleu std: 0.01833686856243482
+Answer paraphrased S1:
+rouge1 mean: 0.5287837970096986; rouge2 mean: 0.29455725328433463; rougeL mean: 0.5285494873721096
+rouge1 std: 0.010513177393630457; rouge2 std: 0.010341167147634249; rougeL std: 0.010329072872530048
+bleu mean: 0.18813739642107438
+bleu std: 0.02099344539154462
+S2 Question generated:
+BLEU MEAN Question: 0.4701924840680465 STD Question: 0.009043912667503175
+ROUGE1 MEAN Question: 0.6590463883046772 STD Question: 0.006132323610722929
+ROUGE2 MEAN Question: 0.5354632324922847 STD Question: 0.002760203581779526
+ROUGEL MEAN Question: 0.6325819633168123 STD Question: 0.005422203685439499
+S2 Answer generated:
+BLEU MEAN Answer: 0.13455460622157875 STD Answer: 0.011429843185749992
+ROUGE1 MEAN Answer: 0.5544963809792077 STD Answer: 0.01027391381182736
+ROUGE2 MEAN Answer: 0.3512045321109151 STD Answer: 0.00801844055935355
+ROUGEL MEAN Answer: 0.5529926424099677 STD Answer: 0.010503844627954975
+
+PTR Avoid lowest ppl reference ICL Experiment:
+Config: {'max_new_tokens': 64, 'do_sample': True, 'temperature': 0.19076405333333335, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'pad_token_id': 128001, 'eos_token_id': 128001, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7f95859903d0>]}
+meta-llama/Llama-3.2-1B S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.8541413734008135; rouge2 mean: 0.8267141311506886; rougeL mean: 0.8498154434701263
+rouge1 std: 0.003585799147939435; rouge2 std: 0.0037759271936168987; rougeL std: 0.0038411637402093763
+bleu mean: 0.6079904860040682
+bleu std: 0.0061470498687430436
+Answer paraphrased S1:
+rouge1 mean: 0.5820842758386136; rouge2 mean: 0.33880795165143646; rougeL mean: 0.5829096070327221
+rouge1 std: 0.005716592818337236; rouge2 std: 0.005786210427369543; rougeL std: 0.0064544996906817495
+bleu mean: 0.20155632684778288
+bleu std: 0.004721062579465699
+S2 Question generated:
+BLEU MEAN Question: 0.3506518206795107 STD Question: 0.0068084011011213036
+ROUGE1 MEAN Question: 0.6889019122018474 STD Question: 0.012054021024614855
+ROUGE2 MEAN Question: 0.6477965226482083 STD Question: 0.009734560107897892
+ROUGEL MEAN Question: 0.6836750046501635 STD Question: 0.0100086946628956
+S2 Answer generated:
+BLEU MEAN Answer: 0.213045609054744 STD Answer: 0.018358095891496097
+ROUGE1 MEAN Answer: 0.5743608780752768 STD Answer: 0.012500927379268988
+ROUGE2 MEAN Answer: 0.36226374850639553 STD Answer: 0.013403984315729398
+ROUGEL MEAN Answer: 0.5733980880230881 STD Answer: 0.012941842027278985
+
+PTR Avoid lowest ppl reference ICL Experiment:
+Config: {'max_new_tokens': 21, 'do_sample': True, 'temperature': 0.1172696, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'pad_token_id': 50256, 'eos_token_id': 50256, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7fc067ab4550>]}
+EleutherAI/gpt-neo-1.3B S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.4910958950586673; rouge2 mean: 0.42108815954954654; rougeL mean: 0.47640439110803084
+rouge1 std: 0.02591370275985362; rouge2 std: 0.025984078601766738; rougeL std: 0.026471644937520303
+bleu mean: 0.3608583812480162
+bleu std: 0.029125172849120015
+Answer paraphrased S1:
+rouge1 mean: 0.2834021739762641; rouge2 mean: 0.15699422954461253; rougeL mean: 0.2813500005913782
+rouge1 std: 0.010234219055051853; rouge2 std: 0.006213666591066476; rougeL std: 0.010530973542532757
+bleu mean: 0.07622795950138629
+bleu std: 0.012090862444530578
+S2 Question generated:
+BLEU MEAN Question: 6.476631522257735e-10 STD Question: 9.159340131467354e-10
+ROUGE1 MEAN Question: 0.009522122170341986 STD Question: 0.0020030364899906866
+ROUGE2 MEAN Question: 0.006257575757575757 STD Question: 0.0006715842505381288
+ROUGEL MEAN Question: 0.009260354597815898 STD Question: 0.0017694283893995748
+S2 Answer generated:
+BLEU MEAN Answer: 0.007423190211614102 STD Answer: 0.002627588735376605
+ROUGE1 MEAN Answer: 0.04259070300465136 STD Answer: 0.00041106581754441656
+ROUGE2 MEAN Answer: 0.019028644865601387 STD Answer: 0.0014860865100541328
+ROUGEL MEAN Answer: 0.03984819987803734 STD Answer: 0.0005927520458557063
+
+PTR Avoid lowest ppl reference ICL Experiment:
+Config: {'max_new_tokens': 21, 'do_sample': True, 'temperature': 0.1858136, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7fc06d61f490>]}
+HuggingFaceTB/SmolLM-1.7B S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.6266027051431803; rouge2 mean: 0.542496763865936; rougeL mean: 0.6090910888859864
+rouge1 std: 0.01668551628531389; rouge2 std: 0.016143954599691215; rougeL std: 0.015919826058034575
+bleu mean: 0.46835085926687703
+bleu std: 0.017293708210152997
+Answer paraphrased S1:
+rouge1 mean: 0.388747526925701; rouge2 mean: 0.21110927470862337; rougeL mean: 0.3877849481469322
+rouge1 std: 0.02377769071005814; rouge2 std: 0.01618907137606426; rougeL std: 0.023823244325321114
+bleu mean: 0.12623604369581673
+bleu std: 0.008712959399692194
+S2 Question generated:
+BLEU MEAN Question: 3.095339018079582e-28 STD Question: 4.377470419510764e-28
+ROUGE1 MEAN Question: 0.0017391304347826092 STD Question: 0.0024595018476053832
+ROUGE2 MEAN Question: 0.0012896825396825397 STD Question: 0.001823886538774825
+ROUGEL MEAN Question: 0.0019899665551839467 STD Question: 0.002814237691010006
+S2 Answer generated:
+BLEU MEAN Answer: 0.004852918751885181 STD Answer: 0.000684251741732789
+ROUGE1 MEAN Answer: 0.0386286193324506 STD Answer: 0.004437397491382218
+ROUGE2 MEAN Answer: 0.014495308435525824 STD Answer: 0.0024516845206859106
+ROUGEL MEAN Answer: 0.03728965708640631 STD Answer: 0.004503888734129576
+
+PTR Avoid lowest ppl reference ICL Experiment:
+Config: {'max_new_tokens': 69, 'do_sample': True, 'temperature': 0.08451402666666667, 'top_k': 50, 'output_scores': True, 'return_dict_in_generate': True, 'logits_processor': [<dpps.SLM.ClipLogitsProcessor object at 0x7fc0679673d0>]}
+facebook/opt-1.3b S1 Experiment:
+Question paraphrased S1:
+rouge1 mean: 0.31409367763315105; rouge2 mean: 0.16858699488810178; rougeL mean: 0.29446011091946106
+rouge1 std: 0.007890791444191326; rouge2 std: 0.011264759439028094; rougeL std: 0.008618458967260509
+bleu mean: 0.08376605160237861
+bleu std: 0.00816730392318886
+Answer paraphrased S1:
+rouge1 mean: 0.1741221856358065; rouge2 mean: 0.09894462779595116; rougeL mean: 0.17364035903709055
+rouge1 std: 0.014312647062308668; rouge2 std: 0.011183666393060326; rougeL std: 0.014532892510937118
+bleu mean: 0.03672395048161652
+bleu std: 0.009502016871974333
+S2 Question generated:
+BLEU MEAN Question: 0.028729308236738832 STD Question: 0.0069147888298086895
+ROUGE1 MEAN Question: 0.10346792089487224 STD Question: 0.002383707721629088
+ROUGE2 MEAN Question: 0.0418421350820816 STD Question: 0.003070405937353319
+ROUGEL MEAN Question: 0.09738381733297964 STD Question: 0.003652208377479721
+S2 Answer generated:
+BLEU MEAN Answer: 0.014023624310016825 STD Answer: 0.0011271401282884716
+ROUGE1 MEAN Answer: 0.08008132884319497 STD Answer: 0.015222997792915466
+ROUGE2 MEAN Answer: 0.04886386288229936 STD Answer: 0.009467543111542133
+ROUGEL MEAN Answer: 0.07844100925552308 STD Answer: 0.015663909863381096

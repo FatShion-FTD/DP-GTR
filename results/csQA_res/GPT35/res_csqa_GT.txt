@@ -1,0 +1,2 @@
+Answer paraphrased GT:
+Accuracy Mean: 0.8; Std: 0.0
