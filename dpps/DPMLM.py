@@ -539,7 +539,7 @@ if __name__ == '__main__':
     # print(dpmlm.dpmlm_rewrite(sentence, epsilon, REPLACE=True, FILTER=True, STOP=True, TEMP=True, POS=True, CONCAT=True))
     # print(dpmlm.dpmlm_rewrite_plus(sentence, epsilon, FILTER=True, TEMP=True, POS=True, CONCAT=True, ADD_PROB=0.15, DEL_PROB=0.05))
     
-    epsilons_list = [160,80,54,40,32,27]
+    epsilons_list = [160,80,54,40,32,27]        # 20 * 2
     for eps in epsilons_list:
         output, _, _ = dpmlm.dpmlm_rewrite(sentence, eps, REPLACE=True, FILTER=True, STOP=True, TEMP=True, POS=True, CONCAT=True)
         print(output)

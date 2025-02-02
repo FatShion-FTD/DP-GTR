@@ -347,12 +347,19 @@ def pnf_joint(item_counts, k, epsilon, neighbor_type):
 
 
 if __name__ == "__main__":
-    item_counts = np.array([10, 5, 3, 2, 1])
+    item_counts = np.array([10, 5, 3, 2, 1, 1, 1])
     k = 3
-    epsilon = 1.0
-    neighbor_type = 0
-    print(joint(item_counts, k, epsilon, neighbor_type))
-    print(pnf_joint(item_counts, k, epsilon, neighbor_type))
+    epsilon = 2
+    neighbor_type = 1
+    for _ in range(3):
+        print(joint(item_counts, k, epsilon, neighbor_type))
+        print(pnf_joint(item_counts, k, epsilon, neighbor_type))
+        print("=" * 20)
+        
+    token_list = ['aaa', 'bbb']
+    suggest_tokens = ", ".join(token_list)
+    print(suggest_tokens)
+    print(len(suggest_tokens))
 
     # filtered_tokens_sorted = sorted(filtered_tokens.items(), key=lambda x: x[1], reverse=True)
     # item_counts = np.array([count for token, count in filtered_tokens_sorted])
