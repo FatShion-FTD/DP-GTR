@@ -50,9 +50,11 @@ def generate(
     frequency_penalty=None,
     presence_penalty=None,
     stop=None,
+    print_output=True,
 ):
-    print(content)
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    if print_output:
+        print(content)
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     ans = None
     try:
         args = {
@@ -75,11 +77,13 @@ def generate(
 
         response = client.completions.create(**args)
         ans = response.choices[0].text
-        print(f"{response.choices[0].text}")
+        if print_output:
+            print(f"{response.choices[0].text}")
     except Exception as e:
         ans = ""
         print(f"Error: {e}")
-    print("========================================")
+    if print_output:
+        print("========================================")
     return ans
 
 

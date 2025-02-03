@@ -7,66 +7,74 @@ import pandas as pd
 import os, sys
 from utils import convert_ABCDE, create_choices
 from dpps.jointEM import joint
+    
+    
+    
 
-    
-    
+# dataset_path = f"dataset/commonsense_qa_{N}_choices.json"
+# if N == 5:
+#     data = load_dataset("tau/commonsense_qa")
+#     test_df = data['validation'].to_pandas()
+# else:
+#     test_df = pd.read_json(dataset_path, orient="records", lines=True)
+
 TEST_SIZE = 200
-N = 5
-dataset_path = f"dataset/commonsense_qa_{N}_choices.json"
-if N == 5:
-    data = load_dataset("tau/commonsense_qa")
-    test_df = data['validation'].to_pandas()
-else:
-    test_df = pd.read_json(dataset_path, orient="records", lines=True)
+N = 4
+
+data = pd.read_json(f"dataset/medQA_{N}.json", orient="records")
+test_df = data
 test_df = test_df.head(TEST_SIZE)
-REMAIN = 10
-EXP_NAME = f"\n{REMAIN} Tokens Avoid Generation lowest ppl reference ICL Experiment:"
+
+# paraphrase_Ts = [0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 1.0, 1.5]
+paraphrase_Ts = [1.25]
+logits_bias_dict = {"32": 100, "33": 100, "34": 100, "35": 100, "36": 100}     # A-E: 32-35
 temperture_list = [1,2,3,4,5,6,7,8,9,10]
 
+path_prefix = "results/medQA/GPT35/"
+if not os.path.exists(path_prefix):
+    os.makedirs(path_prefix)
     
+REMAIN = 10
+EXP_NAME = f"\n{REMAIN} Tokens Avoid Generation lowest ppl reference ICL Experiment:"
+rouge_metric = evaluate.load("rouge")
+bleu_metric = evaluate.load("bleu")
+acc_metric = evaluate.load("accuracy")
+perplexity_metric = evaluate.load("perplexity", module_type="metric")
+
+
+
+
 
 def build_answer_prompt(df, i, t):
     prompt = ""
-    for idx in range(len(df.loc[i]['choices']['label'])):
-        prompt += df.loc[i]['choices']['label'][idx] + ". " + df.loc[i]['choices']['text'][idx] + '\n'
+    for k,v in df.loc[i]['choices'].items():
+        prompt += k + ". " + v + '\n'
     prompt = df.loc[i][f'T_{t}'] + '\nAnswer the question with the following options: ' + '\n' + prompt + 'Answer Index: '
     return prompt
 
 
 def run():
-    paraphrase_Ts = [0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
-    logits_bias_dict = {"32": 100, "33": 100, "34": 100, "35": 100, "36": 100}     # A-E: 32-35
-    path_prefix = "results/csQA_res/GPT35/"
-    if not os.path.exists(path_prefix):
-            os.makedirs(path_prefix)
-
-
-
     for paraphrase_T in paraphrase_Ts:
 
         res_path = f"{path_prefix}res_{paraphrase_T}.txt"
         append2file(res_path, EXP_NAME)
         append2file(res_path, f"Paraphrase T: {paraphrase_T}")
 
-        rouge_metric = evaluate.load("rouge")
-        bleu_metric = evaluate.load("bleu")
-        acc_metric = evaluate.load("accuracy")
-
         paraphrased_df = pd.DataFrame()
         # Concat the paraphrased questions with the original questions and answers
         paraphrased_df['original_question'] = test_df['question']
-        paraphrased_df["original_answer"] = test_df["answerKey"]
-        paraphrased_df['choices'] = test_df['choices']
+        paraphrased_df["original_answer"] = test_df["answer_idx"]
+        paraphrased_df['choices'] = test_df['options']
         
         
         # ## Step1.1: Paraphrase Questions
         T = paraphrase_T
         for tempreture in temperture_list:
-            paraphrased_df[f"T_{tempreture}"] = test_df["question"].apply(
+            paraphrased_df[f"T_{tempreture}"] = paraphrased_df['original_question'].apply(
                 lambda x: generate(
-                    f"Question : {x}\nParaphrase of the question :",
+                    f"Question: {x}\nParaphrase of the question :",
                     temperature=T,
-                    stop=["\n"],
+                    stop=["?"],
                 )
             )
             
@@ -78,8 +86,9 @@ def run():
             if tot_len == 0:
                 paraphrased_df.drop(i, inplace=True)
                 append2file(res_path, f"row {i}: empty!!")
+                
 
-        references = test_df["question"].tolist()
+        references = paraphrased_df["original_question"].tolist()
         rouge1_scores, rouge2_scores, rougeL_scores, rougeLSum_scores = [], [], [], []
         bleu_scores = []
         for tempreture in temperture_list:
@@ -144,12 +153,6 @@ def run():
         questions_gt_list = paraphrased_df["original_question"].tolist()
         answers_gt_list = paraphrased_df["original_answer"].tolist()
         answers_gt_list = convert_ABCDE(answers_gt_list)
-
-
-        rouge_metric = evaluate.load("rouge")
-        bleu_metric = evaluate.load("bleu")
-        acc_metric = evaluate.load("accuracy")
-        perplexity_metric = evaluate.load("perplexity", module_type="metric")
         
         import nltk
         nltk.download("stopwords")
@@ -162,7 +165,6 @@ def run():
         import random
 
         repeats = 3
-
         (
             bleu_q_scores,
             rouge1_q_scores,
@@ -190,7 +192,7 @@ def run():
         paraphrased_df['jem_answer'] = [[] for _ in range(len(paraphrased_df))]
         
         
-        for _ in range(repeats):
+        for r in range(repeats):
             questions_list = []
             answers_list = []
             jem_questions_list = []
@@ -279,8 +281,8 @@ def run():
                 ## cloud enable section ##
                 # Generate answers
                 prompt = ""
-                for idx in range(len(paraphrased_df.loc[i]['choices']['label'])):
-                    prompt += paraphrased_df.loc[i]['choices']['label'][idx] + ". " + paraphrased_df.loc[i]['choices']['text'][idx] + '\n'
+                for k,v in paraphrased_df.loc[i]['choices'].items():
+                    prompt += k + ". " + v + '\n'
                 prompt = question + '\nAnswer the question with the following options: ' + '\n' + prompt + 'Answer Index: '
                 
                 answers = generate(prompt, temperature=0.0, logits_dict=logits_bias_dict, max_tokens=1)
@@ -315,8 +317,8 @@ def run():
                 ## cloud enable section ##
                 # Generate answers
                 prompt = ""
-                for idx in range(len(paraphrased_df.loc[i]['choices']['label'])):
-                    prompt += paraphrased_df.loc[i]['choices']['label'][idx] + ". " + paraphrased_df.loc[i]['choices']['text'][idx] + '\n'
+                for k,v in paraphrased_df.loc[i]['choices'].items():
+                    prompt += k + ". " + v + '\n'
                 prompt = question + '\nAnswer the question with the following options: ' + '\n' + prompt + 'Answer Index: '
                 
                 answers = generate(prompt, temperature=0.0, logits_dict=logits_bias_dict, max_tokens=1)

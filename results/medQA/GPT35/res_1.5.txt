@@ -1,0 +1,31 @@
+
+10 Tokens Avoid Generation lowest ppl reference ICL Experiment:
+Paraphrase T: 1.5
+row 78: empty!!
+row 137: empty!!
+row 166: empty!!
+Question paraphrased S1:
+rouge1 mean: 0.08083395941755132; rouge2 mean: 0.012609342170701063; rougeL mean: 0.056993513973542444; rougeLSum mean: 0.06186953283128821
+rouge1 std: 0.002416144686626521; rouge2 std: 0.0012194926022868295; rougeL std: 0.0017370891957163; rougeLSum std: 0.0018045307705436139
+bleu mean: 0.0036920018682554214
+bleu std: 0.0005051812972065748
+Answer paraphrased S1:
+Accuracy mean: 0.3649746192893401
+Accuracy std: 0.030997735311212242
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Non-DP Question generated:
+rouge1 mean: 0.08388660069866037; rouge2 mean: 0.01902502609866299; rougeL mean: 0.059482088605522544; rougeLSum mean: 0.06111230446134921
+rouge1 std: 0.0016173313893595768; rouge2 std: 0.00027253849233187184; rougeL std: 0.001439568296043384; rougeLSum std: 0.0013372030133093095
+bleu mean: 2.775537551801808e-06
+bleu std: 3.9812654901213534e-07
+Answer Accuracy mean: 0.41116751269035534
+Answer Accuracy std: 0.004144652695064611
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+JointEM Question generated:
+rouge1 mean: 0.0848920218345844; rouge2 mean: 0.021611598952270245; rougeL mean: 0.06050268870222442; rougeLSum mean: 0.062030888662019175
+rouge1 std: 0.0030170087538668434; rouge2 std: 0.0009627127030612709; rougeL std: 0.002024530182123561; rougeLSum std: 0.001925583192052668
+bleu mean: 2.815887477157706e-06
+bleu std: 8.174360541739813e-07
+Answer Accuracy mean: 0.40270727580372245
+Answer Accuracy std: 0.016750414444351387
+==================================================
