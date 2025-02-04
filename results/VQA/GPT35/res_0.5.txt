@@ -1,0 +1,34 @@
+
+10 Tokens Avoid Generation lowest ppl reference ICL Experiment:
+Paraphrase T: 0.5
+Question paraphrased S1:
+rouge1 mean: 0.6528573875194436; rouge2 mean: 0.414703350383851; rougeL mean: 0.5936717525064032; rougeLSum mean: 0.5944102432286292
+rouge1 std: 0.007259003634492182; rouge2 std: 0.008614566598180504; rougeL std: 0.008308126652601383; rougeLSum std: 0.008407886620088277
+bleu mean: 0.287322213423362
+bleu std: 0.01537000340523355
+Answer paraphrased S1:
+rouge1 mean: 0.5130586078576165; rouge2 mean: 0.29276084627858134; rougeL mean: 0.5125707454609566; rougeLSum mean: 0.5159855780550939
+rouge1 std: 0.0; rouge2 std: 0.0; rougeL std: 0.0; rougeLSum std: 0.0
+bleu mean: 0.1877347273977869
+bleu std: 0.0
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Non-DP Question generated:
+rouge1 mean: 0.489104743086028; rouge2 mean: 0.26139064138576307; rougeL mean: 0.4527843249409444; rougeLSum mean: 0.4522895684799028
+rouge1 std: 0.0045256866852265865; rouge2 std: 0.0048336009361682995; rougeL std: 0.004038738086968756; rougeLSum std: 0.0038139358613807546
+bleu mean: 0.1465958300827084
+bleu std: 0.00655290454245492
+Answer rouge1 mean: 0.47891958520129846; rouge2 mean: 0.3047342631012542; rougeL mean: 0.47858936080619524; rougeLSum mean: 0.47863102946414643
+Answer rouge1 std: 0.01335668484695074; rouge2 std: 0.004992734555924914; rougeL std: 0.012654447294339444; rougeLSum std: 0.012849934996458257
+Answer bleu mean: 0.13829164232976235
+Answer bleu std: 0.01251735925717719
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+JointEM Question generated:
+rouge1 mean: 0.5093863410134665; rouge2 mean: 0.276944264189881; rougeL mean: 0.4705096570887699; rougeLSum mean: 0.4696445880810442
+rouge1 std: 0.0032502972127272742; rouge2 std: 0.0025773533051316184; rougeL std: 0.0027788160433238895; rougeLSum std: 0.00276439120764414
+bleu mean: 0.15903880700761744
+bleu std: 0.0024249704282413203
+Answer rouge1 mean: 0.500542227393418; rouge2 mean: 0.31315692130350087; rougeL mean: 0.4999379420182992; rougeLSum mean: 0.5011800076026267
+Answer rouge1 std: 0.011170438909310998; rouge2 std: 0.009647659911889895; rougeL std: 0.011411085500048192; rougeLSum std: 0.011120633090181986
+Answer bleu mean: 0.16786650162684905
+Answer bleu std: 0.024767644428051
+==================================================
