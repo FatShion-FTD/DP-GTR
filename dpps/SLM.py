@@ -134,6 +134,18 @@ class SLM:
                 "mean": 22.531474,
                 "std": 3.230357
             }
+        }, 
+        "Llama-3.1-8B":{
+            "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            "all_clip": {
+                "mean": 22.944258,
+                "std": 2.420791,
+                "max": 31.031375
+            },
+            "single_clip": {
+                "mean": 31.031375,
+                "std": 6.170953
+            }
         }
     }
     
@@ -168,7 +180,7 @@ class SLM:
     def _default_config(self):
         """Returns the default configuration for text generation."""
         return {
-            "max_new_tokens": 256,
+            "max_new_tokens": 512,
             "do_sample": True,
             "temperature": 1.0,
             "top_k": 50,
@@ -199,8 +211,13 @@ class SLM:
         std = model_config[clip_type]["std"]
 
         # Calculate min and max logits for clipping
-        self.min_logit = mean - 2 * std
-        self.max_logit = mean + 2 * std
+        if "max" in model_config[clip_type]:
+            self.max_logit = model_config[clip_type]["max"]
+            self.min_logit = mean
+        else:
+            self.max_logit = mean + 2 * std
+            self.min_logit = mean - 2 * std
+        
 
         # Calculate sensitivity and set temperature
         self.sensitivity = abs(self.max_logit - self.min_logit)
@@ -275,24 +292,30 @@ class SLM:
 
 if __name__ == "__main__":
     
-    model_name_list = [
-        "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        "meta-llama/Llama-3.2-1B",
-        "EleutherAI/gpt-neo-1.3B",
-        "HuggingFaceTB/SmolLM-1.7B",
-        "facebook/opt-1.3b",
-        "Qwen/Qwen2-1.5B",
-        "meta-llama/Llama-3.2-3B",
-        "EleutherAI/pythia-1.4b",
-        "ahxt/LiteLlama-460M-1T",
-    ]
+    # model_name_list = [
+    #     "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    #     "meta-llama/Llama-3.2-1B",
+    #     "EleutherAI/gpt-neo-1.3B",
+    #     "HuggingFaceTB/SmolLM-1.7B",
+    #     "facebook/opt-1.3b",
+    #     "Qwen/Qwen2-1.5B",
+    #     "meta-llama/Llama-3.2-3B",
+    #     "EleutherAI/pythia-1.4b",
+    #     "ahxt/LiteLlama-460M-1T",
+    # ]
     
+    # tokens_list = ['A', 'B', 'C', 'D', 'E']
+    
+    # for model_name in model_name_list:
+    #     model = SLM(model_name)
+    #     token_ids = model.get_tokenid(tokens_list)
+    #     print(f"Model: {model_name}, Token IDs: {token_ids}")
+    
+    model_name = "meta-llama/Llama-3.1-8B-Instruct"
+    model = SLM(model_name)
     tokens_list = ['A', 'B', 'C', 'D', 'E']
-    
-    for model_name in model_name_list:
-        model = SLM(model_name)
-        token_ids = model.get_tokenid(tokens_list)
-        print(f"Model: {model_name}, Token IDs: {token_ids}")
+    token_ids = model.get_tokenid(tokens_list)
+    print(f"Model: {model_name}, Token IDs: {token_ids}")
 
     
 

@@ -58,9 +58,9 @@ class DPPrompt():
         prompt = "Document : {}\nParaphrase of the document :".format(doc)
         return prompt
     
-    # def privatize(self, text, epsilon=100):
-    def privatize(self, text, temperature):
-        # temperature = 2 * self.sensitivity / epsilon
+    def privatize(self, text, epsilon=100):
+    # def privatize(self, text, temperature):
+        temperature = 2 * self.sensitivity / epsilon
 
         prompt = self.prompt_template_fn(text)
 
@@ -89,7 +89,7 @@ class DPParaphrase():
     model = None
     device = None
 
-    def __init__(self, model_checkpoint=(Path().home() / "Desktop/models/gpt2-paraphraser")):
+    def __init__(self, model_checkpoint="gpt2-paraphraser"):
         self.model_checkpoint = model_checkpoint
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

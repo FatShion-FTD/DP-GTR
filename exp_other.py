@@ -509,7 +509,7 @@ from utils import append2file, str_to_list, convert_ABCDE, create_choices
 from datasets import load_dataset
 from openai_backTranslation import generate
 from dpps.DPMLM import DPMLM
-from dpps.LLMDP import DPParaphrase
+from dpps.LLMDP import DPParaphrase, DPPrompt
 from dpps.HaS import HaS
 
 
@@ -518,7 +518,7 @@ TEST_SIZE = 200
 
 # 全局变量（在循环中会被赋值）
 DATASET_TYPE = None  # 可选值："csQA", "medQA", "VQA"
-EXP_TYPE = None      # 可选值："DPMLM", "DPParaphrase"
+EXP_TYPE = None      # 可选值："DPMLM", "DPParaphrase", "DPPrompt"
 path_prefix = None
 
 # 固定的温度列表和 logits_bias_dict（选项，根据你的代码逻辑保持不变）
@@ -593,6 +593,112 @@ def get_df():
     return paraphrased_df
 
 
+def run_DPPrompt():
+    paraphrased_df = get_df()
+    paraphrase_epss = [2 * 26.71 / xi for xi in paraphrase_Ts]
+    print("paraphrase epsilons:", paraphrase_epss)
+    
+    dpp = DPPrompt()
+    for idx, eps in enumerate(paraphrase_epss):
+        paraphrase_T = paraphrase_Ts[idx]
+        res_path = f"{path_prefix}res_{paraphrase_T}_{eps}.txt"
+        append2file(res_path, EXP_NAME.format(EXP_TYPE=EXP_TYPE, DATASET_TYPE=DATASET_TYPE))
+        append2file(res_path, f"Paraphrase T: {paraphrase_T}")
+
+        # 对每个温度生成改写后的问题
+        for tempreture in temperture_list:
+            paraphrased_df[f"T_{tempreture}"] = paraphrased_df['original_question'].apply(
+                lambda x: dpp.privatize(text=x, epsilon=eps)
+            )
+            
+        # 检查每行在所有温度下是否均为空
+        for i in range(len(paraphrased_df)):
+            tot_len = sum(len(paraphrased_df.loc[i][f"T_{t}"]) for t in temperture_list)
+            if tot_len == 0:
+                paraphrased_df.drop(i, inplace=True)
+                append2file(res_path, f"row {i}: empty!!")
+        paraphrased_df.reset_index(drop=True, inplace=True)
+                
+        # 计算指标：rouge, bleu 等
+        references = paraphrased_df["original_question"].tolist()
+        rouge1_scores, rouge2_scores, rougeL_scores, rougeLSum_scores = [], [], [], []
+        bleu_scores = []
+        for tempreture in temperture_list:
+            predictions = paraphrased_df[f"T_{tempreture}"].tolist()
+            score = rouge_metric.compute(references=references, predictions=predictions)
+            print(f"Temp {tempreture} -> rouge1: {score['rouge1']}; rouge2: {score['rouge2']}; rougeL: {score['rougeL']}")
+            rouge1_scores.append(score["rouge1"])
+            rouge2_scores.append(score["rouge2"])
+            rougeL_scores.append(score["rougeL"])
+            rougeLSum_scores.append(score["rougeLsum"])
+            bleu_score = bleu_metric.compute(references=references, predictions=predictions)
+            bleu_scores.append(bleu_score["bleu"])
+            print(f"Temp {tempreture} -> bleu: {bleu_score}")
+
+        append2file(res_path, "Question paraphrased S1:")
+        append2file(res_path,
+            f"rouge1 mean: {np.mean(rouge1_scores)}; rouge2 mean: {np.mean(rouge2_scores)}; "
+            f"rougeL mean: {np.mean(rougeL_scores)}; rougeLSum mean: {np.mean(rougeLSum_scores)}"
+        )
+        append2file(res_path,
+            f"rouge1 std: {np.std(rouge1_scores)}; rouge2 std: {np.std(rouge2_scores)}; "
+            f"rougeL std: {np.std(rougeL_scores)}; rougeLSum std: {np.std(rougeLSum_scores)}"
+        )
+        append2file(res_path, f"bleu mean: {np.mean(bleu_scores)}")
+        append2file(res_path, f"bleu std: {np.std(bleu_scores)}")
+        df_file_path = f"{path_prefix}paraphrased_questions_T{paraphrase_T}.json"
+        paraphrased_df.to_json(df_file_path, orient="records")
+        
+        if DATASET_TYPE in ['csQA', 'medQA']:
+            gt_answer = convert_ABCDE(paraphrased_df["original_answer"].tolist())
+            acc_scores = []
+            for t in temperture_list:
+                T_predictions = []
+                for i in range(len(paraphrased_df)):
+                    prompt = build_prompt(paraphrased_df, i, t)
+                    T_predictions.append(generate(prompt, temperature=0.0, logits_dict=logits_bias_dict, max_tokens=1))
+                T_predictions = convert_ABCDE(T_predictions)
+                acc_score = acc_metric.compute(references=gt_answer, predictions=T_predictions)
+                acc_scores.append(acc_score['accuracy'])
+            append2file(res_path, "Answer paraphrased S1:")
+            append2file(res_path, f"Accuracy mean: {np.mean(acc_scores)}")
+            append2file(res_path, f"Accuracy std: {np.std(acc_scores)}")
+            append2file(res_path, ">" * 50)
+        else:
+            # 针对 VQA 的处理
+            gt_answer = []
+            for i in range(len(paraphrased_df)):
+                answer = ", ".join(paraphrased_df.loc[i]["original_answer"])
+                gt_answer.append(answer)
+            rouge1_a_scores, rouge2_a_scores, rougeL_a_scores, rougeLSum_a_scores = [], [], [], []
+            bleu_a_scores = []
+            for t in temperture_list:
+                T_predictions = []
+                for i in range(len(paraphrased_df)):
+                    prompt = build_prompt(paraphrased_df, i, t)
+                    T_predictions.append(generate(prompt, temperature=0.0, stop=["\n"]))
+            score = rouge_metric.compute(references=gt_answer, predictions=T_predictions)
+            rouge1_a_scores.append(score["rouge1"])
+            rouge2_a_scores.append(score["rouge2"])
+            rougeL_a_scores.append(score["rougeL"])
+            rougeLSum_a_scores.append(score["rougeLsum"])
+            bleu_score = bleu_metric.compute(references=gt_answer, predictions=T_predictions)
+            bleu_a_scores.append(bleu_score["bleu"])
+            append2file(res_path, "Answer paraphrased S1:")
+            append2file(res_path,
+                f"rouge1 mean: {np.mean(rouge1_a_scores)}; rouge2 mean: {np.mean(rouge2_a_scores)}; "
+                f"rougeL mean: {np.mean(rougeL_a_scores)}; rougeLSum mean: {np.mean(rougeLSum_a_scores)}"
+            )
+            append2file(res_path,
+                f"rouge1 std: {np.std(rouge1_a_scores)}; rouge2 std: {np.std(rouge2_a_scores)}; "
+                f"rougeL std: {np.std(rougeL_a_scores)}; rougeLSum std: {np.std(rougeLSum_a_scores)}"
+            )
+            append2file(res_path, f"bleu mean: {np.mean(bleu_a_scores)}")
+            append2file(res_path, f"bleu std: {np.std(bleu_a_scores)}")
+            append2file(res_path, ">" * 50)
+    
+    
+
 def run_DPParaphrase():
     paraphrased_df = get_df()
     paraphrase_epss = [2 * 88 / xi for xi in paraphrase_Ts]
@@ -617,6 +723,7 @@ def run_DPParaphrase():
             if tot_len == 0:
                 paraphrased_df.drop(i, inplace=True)
                 append2file(res_path, f"row {i}: empty!!")
+        paraphrased_df.reset_index(drop=True, inplace=True)
                 
         # 计算指标：rouge, bleu 等
         references = paraphrased_df["original_question"].tolist()
@@ -810,10 +917,13 @@ if __name__ == '__main__':
     experiments = [
         # ("csQA", "DPMLM"),
         # ("csQA", "DPParaphrase"),
-        ("medQA", "DPMLM"),
-        ("medQA", "DPParaphrase"),
-        ("VQA", "DPMLM"),
-        ("VQA", "DPParaphrase"),
+        # ("medQA", "DPMLM"),
+        # ("medQA", "DPParaphrase"),
+        # ("VQA", "DPMLM"),
+        # ("VQA", "DPParaphrase"),
+        ("csQA", "DPPrompt"),
+        ("medQA", "DPPrompt"),
+        ("VQA", "DPPrompt")
     ]
 
     for ds, exp in experiments:
@@ -827,6 +937,8 @@ if __name__ == '__main__':
             run_DPMLM()
         elif EXP_TYPE == 'DPParaphrase':
             run_DPParaphrase()
+        elif EXP_TYPE == 'DPPrompt':
+            run_DPPrompt()
         else:
             print("Invalid EXP_TYPE")
             sys.exit(0)
