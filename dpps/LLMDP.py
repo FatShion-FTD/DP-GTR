@@ -71,7 +71,7 @@ class DPPrompt():
             top_k=0,
             top_p=1.0,
             temperature=temperature,
-            max_new_tokens=len(model_inputs["input_ids"][0]),
+            max_new_tokens=int(1.2 * len(model_inputs["input_ids"][0])),
             logits_processor=self.logits_processor)
 
         private_text = self.tokenizer.decode(output[0], skip_special_tokens = True )

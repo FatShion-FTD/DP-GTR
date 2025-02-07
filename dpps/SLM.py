@@ -8,14 +8,27 @@ from transformers import (
     LogitsProcessorList
 )
 
-class ClipLogitsProcessor(LogitsProcessor):
-  def __init__(self, min=-100, max=100):
-    self.min = min
-    self.max = max
+# class ClipLogitsProcessor(LogitsProcessor):
+#   def __init__(self, min=-100, max=100):
+#     self.min = min
+#     self.max = max
 
-  def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-    scores = torch.clamp(scores, min=self.min, max=self.max)
-    return scores
+#   def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+#     scores = torch.clamp(scores, min=self.min, max=self.max)
+#     return scores
+
+class ClipLogitsProcessor(LogitsProcessor):
+    def __init__(self, min_val=-100, max_val=100, beta=0.1):
+        self.min_val = min_val
+        self.max_val = max_val
+        self.center = (min_val + max_val) / 2.0
+        self.half_range = (max_val - min_val) / 2.0
+        self.beta = beta
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        new_scores = self.center + self.half_range * torch.tanh((scores - self.center) * self.beta)
+        return new_scores
+
 
 
 class StopOnToken(StoppingCriteria):
@@ -136,7 +149,7 @@ class SLM:
             }
         }, 
         "Llama-3.1-8B":{
-            "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            "model_name": "meta-llama/Llama-3.1-8B-Instruct",
             "all_clip": {
                 "mean": 22.944258,
                 "std": 2.420791,
@@ -211,12 +224,8 @@ class SLM:
         std = model_config[clip_type]["std"]
 
         # Calculate min and max logits for clipping
-        if "max" in model_config[clip_type]:
-            self.max_logit = model_config[clip_type]["max"]
-            self.min_logit = mean
-        else:
-            self.max_logit = mean + 2 * std
-            self.min_logit = mean - 2 * std
+        self.max_logit = mean + 2 * std
+        self.min_logit = mean - 2 * std
         
 
         # Calculate sensitivity and set temperature
@@ -311,11 +320,35 @@ if __name__ == "__main__":
     #     token_ids = model.get_tokenid(tokens_list)
     #     print(f"Model: {model_name}, Token IDs: {token_ids}")
     
-    model_name = "meta-llama/Llama-3.1-8B-Instruct"
+    model_name = "meta-llama/Llama-3.1-8B-Instruct" #"meta-llama/Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-1B"
     model = SLM(model_name)
-    tokens_list = ['A', 'B', 'C', 'D', 'E']
+    tokens_list = ['A', 'B', 'C', 'D', 'E']     # [32, 33, 34, 35, 36]
     token_ids = model.get_tokenid(tokens_list)
-    print(f"Model: {model_name}, Token IDs: {token_ids}")
+    # print(f"Model: {model_name}, Token IDs: {token_ids}")
+    
+    model.clip_model(epsilon=100, clip_type="single_clip")
+    print(f"Current Config: {model.get_config()}")
+    text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
+    paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
+    paraphrased_text = model.clean_text(paraphrased_text, text)
+    print(f"Paraphrased Text: {paraphrased_text}")
+    
+    fobidden_words = ['door', 'revolving', 'travel']
+    suggest_tokens = ""
+    for token in fobidden_words:
+        suggest_tokens += token + ", "
+    suggest_tokens = suggest_tokens[:-2]
+    icl_prompt = (
+                "Refer the following question to generate a new question:\n"
+                + paraphrased_text
+                + "\nAvoid using following tokens:\n"
+                + suggest_tokens
+                + "\nGenerated question:\n"
+            )
+    print(f"ICL Prompt: {icl_prompt}")
+    fin_questions = model.generate(icl_prompt, icl_prompt)['output_text']
+    fin_questions = model.clean_text(fin_questions, icl_prompt)
+    print(f"Final Question: {fin_questions}")
 
     
 
