@@ -6,6 +6,9 @@ remote_name="origin"
 # 定义要同步的分支名称
 branch_name="main"
 
+git config user.name FatShion-FTD
+git config user.email mingchenli888@gmail.com
+
 # 添加所有修改
 git add .
 
