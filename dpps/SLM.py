@@ -325,30 +325,31 @@ if __name__ == "__main__":
     tokens_list = ['A', 'B', 'C', 'D', 'E']     # [32, 33, 34, 35, 36]
     token_ids = model.get_tokenid(tokens_list)
     # print(f"Model: {model_name}, Token IDs: {token_ids}")
+    model.clip_model(epsilon=100, clip_type="all_clip")
+    print(model.sensitivity)
     
-    model.clip_model(epsilon=100, clip_type="single_clip")
-    print(f"Current Config: {model.get_config()}")
-    text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
-    paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
-    paraphrased_text = model.clean_text(paraphrased_text, text)
-    print(f"Paraphrased Text: {paraphrased_text}")
+    # print(f"Current Config: {model.get_config()}")
+    # text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
+    # paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
+    # paraphrased_text = model.clean_text(paraphrased_text, text)
+    # print(f"Paraphrased Text: {paraphrased_text}")
     
-    fobidden_words = ['door', 'revolving', 'travel']
-    suggest_tokens = ""
-    for token in fobidden_words:
-        suggest_tokens += token + ", "
-    suggest_tokens = suggest_tokens[:-2]
-    icl_prompt = (
-                "Refer the following question to generate a new question:\n"
-                + paraphrased_text
-                + "\nAvoid using following tokens:\n"
-                + suggest_tokens
-                + "\nGenerated question:\n"
-            )
-    print(f"ICL Prompt: {icl_prompt}")
-    fin_questions = model.generate(icl_prompt, icl_prompt)['output_text']
-    fin_questions = model.clean_text(fin_questions, icl_prompt)
-    print(f"Final Question: {fin_questions}")
+    # fobidden_words = ['door', 'revolving', 'travel']
+    # suggest_tokens = ""
+    # for token in fobidden_words:
+    #     suggest_tokens += token + ", "
+    # suggest_tokens = suggest_tokens[:-2]
+    # icl_prompt = (
+    #             "Refer the following question to generate a new question:\n"
+    #             + paraphrased_text
+    #             + "\nAvoid using following tokens:\n"
+    #             + suggest_tokens
+    #             + "\nGenerated question:\n"
+    #         )
+    # print(f"ICL Prompt: {icl_prompt}")
+    # fin_questions = model.generate(icl_prompt, icl_prompt)['output_text']
+    # fin_questions = model.clean_text(fin_questions, icl_prompt)
+    # print(f"Final Question: {fin_questions}")
 
     
 
