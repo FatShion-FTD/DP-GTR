@@ -8,6 +8,10 @@ import string
 from statistics import mean
 import torch
 import gc
+import os
+import glob
+import re
+
 
 import numpy as np
 import pandas as pd
@@ -45,327 +49,12 @@ bleu_metric = evaluate.load("bleu")
 perplexity_metric = evaluate.load("perplexity", module_type="metric")
 acc_metric = evaluate.load("accuracy")
 
-
-
-
-
-def build_answer_prompt_csqa(df: pd.DataFrame, i, t):
-    """csQA 的答案 prompt：遍历 choices 字典中的 label 与 text"""
-    prompt = ""
-    for idx in range(len(df.loc[i]['choices']['label'])):
-        prompt += df.loc[i]['choices']['label'][idx] + ". " + df.loc[i]['choices']['text'][idx] + "\n"
-    prompt = df.loc[i][f"T_{t}"] + "\nAnswer the question with the following options: \n" + prompt + "Answer Index: "
-    return prompt
-
-def build_answer_prompt_medqa(df: pd.DataFrame, i, t):
-    """medQA 的答案 prompt：此处 choices 存在于 options 字段（作为一个字典）"""
-    prompt = ""
-    for k, v in df.loc[i]['choices'].items():
-        prompt += k + ". " + v + "\n"
-    prompt = df.loc[i][f"T_{t}"] + "\nAnswer the question with the following options: \n" + prompt + "Answer Index: "
-    return prompt
-
-def build_answer_prompt_vqa(df: pd.DataFrame, i, t):
-    """VQA 的答案 prompt：利用 OCR 提取的 words 列表"""
-    prompt = ""
-    for word in df.loc[i]["words"]:
-        prompt += word + ", "
-    prompt = (
-        "Extracted OCR tokens from image:\n"
-        + prompt[:-2]
-        + "\nQuestion: "
-        + df.loc[i][f"T_{t}"]
-        + "\nAnswer the question with short term:\n"
-    )
-    return prompt
-
-def question_paraphrase(question):
-    prompt = f"Question : {question}\nParaphrase of the question :"
-    output = model.generate(prompt, prompt)['output_text']
-    return model.clean_text(output, prompt)
-
-# ------------------ csQA 实验 ------------------
-def run_csqa(paraphrase_T: float):
-    path_prefix = "results/csQA/SLM_Llama8B/"
-    if not os.path.exists(path_prefix):
-        os.makedirs(path_prefix)
-    EXP_NAME = f"\n{REMAIN} Tokens Avoid Generation lowest ppl reference ICL Experiment:"  # 可根据需要调整说明文字
-    
-    epsilon = 2 * SENSITIVITY / paraphrase_T
-    model.clip_model(epsilon=epsilon, clip_type="all_clip")
-    
-    
-    # 加载 csQA 数据集（如果 N==5 则采用 commonsense_qa 数据集）
-    N = 5
-    data = load_dataset("tau/commonsense_qa")
-    test_df = data['validation'].to_pandas().head(TEST_SIZE)
-
-    # 构造用于 paraphrase 的 DataFrame
-    paraphrased_df = pd.DataFrame()
-    paraphrased_df['original_question'] = test_df['question']
-    paraphrased_df['original_answer'] = test_df['answerKey']
-    paraphrased_df['choices'] = test_df['choices']
-
-
-    # 对每个温度生成 paraphrased 文本
-    for temp in TEMPERATURE_LIST:
-        paraphrased_df[f"T_{temp}"] = test_df["question"].apply(
-            lambda x: question_paraphrase(x)
-        )
-
-    # 删除所有 paraphrased 都为空的行
-    for i in range(len(paraphrased_df)):
-        tot_len = sum(len(paraphrased_df.loc[i][f"T_{temp}"]) for temp in TEMPERATURE_LIST)
-        if tot_len == 0:
-            paraphrased_df.drop(i, inplace=True)
-            append2file(os.path.join(path_prefix, f"res_{paraphrase_T}.txt"), f"row {i}: empty!!")
-    paraphrased_df.reset_index(drop=True, inplace=True)
-
-    references = paraphrased_df["original_question"].tolist()
-    rouge1_scores, rouge2_scores, rougeL_scores, rougeLSum_scores = [], [], [], []
-    bleu_scores = []
-    for temp in TEMPERATURE_LIST:
-        predictions = paraphrased_df[f"T_{temp}"].tolist()
-        score = rouge_metric.compute(references=references, predictions=predictions)
-        rouge1_scores.append(score["rouge1"])
-        rouge2_scores.append(score["rouge2"])
-        rougeL_scores.append(score["rougeL"])
-        rougeLSum_scores.append(score["rougeLsum"])
-        bleu_score = bleu_metric.compute(references=references, predictions=predictions)
-        bleu_scores.append(bleu_score["bleu"])
-
-    res_path = os.path.join(path_prefix, f"res_{paraphrase_T}_{epsilon}.txt")
-    append2file(res_path, EXP_NAME)
-    append2file(res_path, f"Paraphrase T: {paraphrase_T}")
-    append2file(res_path, "Question paraphrased S1:")
-    append2file(res_path,
-                f"rouge1 mean: {np.mean(rouge1_scores)}; rouge2 mean: {np.mean(rouge2_scores)}; "
-                f"rougeL mean: {np.mean(rougeL_scores)}; rougeLSum mean: {np.mean(rougeLSum_scores)}")
-    append2file(res_path,
-                f"rouge1 std: {np.std(rouge1_scores)}; rouge2 std: {np.std(rouge2_scores)}; "
-                f"rougeL std: {np.std(rougeL_scores)}; rougeLSum std: {np.std(rougeLSum_scores)}")
-    append2file(res_path, f"bleu mean: {np.mean(bleu_scores)}")
-    append2file(res_path, f"bleu std: {np.std(bleu_scores)}")
-
-    df_file_path = os.path.join(path_prefix, f"paraphrased_questions_T{paraphrase_T}.json")
-    paraphrased_df.to_json(df_file_path, orient="records")
-    paraphrased_df = pd.read_json(df_file_path, orient="records")
-
-    # 生成答案
-    gt_answer = convert_ABCDE(paraphrased_df["original_answer"].tolist())
-    acc_scores = []
-    for temp in TEMPERATURE_LIST:
-        T_predictions = []
-        for i in range(len(paraphrased_df)):
-            prompt = build_answer_prompt_csqa(paraphrased_df, i, temp)
-            T_predictions.append(generate(prompt, temperature=0.0, logits_dict=LOGITS_BIAS_DICT, max_tokens=1))
-        T_predictions = convert_ABCDE(T_predictions)
-        acc_score = acc_metric.compute(references=gt_answer, predictions=T_predictions)
-        acc_scores.append(acc_score['accuracy'])
-    append2file(res_path, "Answer paraphrased S1:")
-    append2file(res_path, f"Accuracy mean: {np.mean(acc_scores)}")
-    append2file(res_path, f"Accuracy std: {np.std(acc_scores)}")
-    append2file(res_path, ">" * 50)
-
-    step2_csQA_medQA(paraphrased_df, res_path, path_prefix, paraphrase_T)
-
-
-# ------------------ medQA 实验 ------------------
-def run_medqa(paraphrase_T: float):
-    path_prefix = "results/medQA/SLM_Llama8B/"
-    if not os.path.exists(path_prefix):
-        os.makedirs(path_prefix)
-    EXP_NAME = f"\n{REMAIN} Tokens Avoid Generation lowest ppl reference ICL Experiment:"
-    
-    epsilon = 2 * SENSITIVITY / paraphrase_T
-    model.clip_model(epsilon=epsilon, clip_type="all_clip")
-    
-    
-    # 使用 medQA 数据（假设文件 dataset/medQA_{N}.json 存在，此处 N=4）
-    N = 4
-    data = pd.read_json(f"dataset/medQA_{N}.json", orient="records")
-    test_df = data.head(TEST_SIZE)
-
-    paraphrased_df = pd.DataFrame()
-    paraphrased_df['original_question'] = test_df['question']
-    paraphrased_df['original_answer'] = test_df['answer_idx']
-    paraphrased_df['choices'] = test_df['options']
-
-    for temp in TEMPERATURE_LIST:
-        paraphrased_df[f"T_{temp}"] = test_df["question"].apply(
-            lambda x: question_paraphrase(x)
-        )
-
-    for i in range(len(paraphrased_df)):
-        tot_len = sum(len(paraphrased_df.loc[i][f"T_{temp}"]) for temp in TEMPERATURE_LIST)
-        if tot_len == 0:
-            paraphrased_df.drop(i, inplace=True)
-            append2file(os.path.join(path_prefix, f"res_{paraphrase_T}.txt"), f"row {i}: empty!!")
-    paraphrased_df.reset_index(drop=True, inplace=True)
-
-    references = paraphrased_df["original_question"].tolist()
-    rouge1_scores, rouge2_scores, rougeL_scores, rougeLSum_scores = [], [], [], []
-    bleu_scores = []
-    for temp in TEMPERATURE_LIST:
-        predictions = paraphrased_df[f"T_{temp}"].tolist()
-        score = rouge_metric.compute(references=references, predictions=predictions)
-        rouge1_scores.append(score["rouge1"])
-        rouge2_scores.append(score["rouge2"])
-        rougeL_scores.append(score["rougeL"])
-        rougeLSum_scores.append(score["rougeLsum"])
-        bleu_score = bleu_metric.compute(references=references, predictions=predictions)
-        bleu_scores.append(bleu_score["bleu"])
-    res_path = os.path.join(path_prefix, f"res_{paraphrase_T}_{epsilon}.txt")
-    append2file(res_path, EXP_NAME)
-    append2file(res_path, f"Paraphrase T: {paraphrase_T}")
-    append2file(res_path,
-                f"Question paraphrased S1: rouge1 mean: {np.mean(rouge1_scores)}; rouge2 mean: {np.mean(rouge2_scores)}; "
-                f"rougeL mean: {np.mean(rougeL_scores)}; rougeLSum mean: {np.mean(rougeLSum_scores)}")
-    append2file(res_path,
-                f"rouge1 std: {np.std(rouge1_scores)}; rouge2 std: {np.std(rouge2_scores)}; "
-                f"rougeL std: {np.std(rougeL_scores)}; rougeLSum std: {np.std(rougeLSum_scores)}")
-    append2file(res_path, f"bleu mean: {np.mean(bleu_scores)}")
-    append2file(res_path, f"bleu std: {np.std(bleu_scores)}")
-
-    df_file_path = os.path.join(path_prefix, f"paraphrased_questions_T{paraphrase_T}.json")
-    paraphrased_df.to_json(df_file_path, orient="records")
-    paraphrased_df = pd.read_json(df_file_path, orient="records")
-
-    gt_answer = []
-    for i in range(len(paraphrased_df)):
-        ans = ""
-        for word in paraphrased_df.loc[i]["original_answer"]:
-            ans += word + ", "
-        ans = ans[:-2]
-        gt_answer.append(ans)
-    gt_answer = convert_ABCDE(gt_answer)
-
-    acc_scores = []
-    for temp in TEMPERATURE_LIST:
-        T_predictions = []
-        for i in range(len(paraphrased_df)):
-            prompt = build_answer_prompt_medqa(paraphrased_df, i, temp)
-            T_predictions.append(generate(prompt, temperature=0.0, logits_dict=LOGITS_BIAS_DICT, max_tokens=1))
-        T_predictions = convert_ABCDE(T_predictions)
-        acc_score = acc_metric.compute(references=gt_answer, predictions=T_predictions)
-        acc_scores.append(acc_score['accuracy'])
-    append2file(res_path, "Answer paraphrased S1:")
-    append2file(res_path, f"Accuracy mean: {np.mean(acc_scores)}")
-    append2file(res_path, f"Accuracy std: {np.std(acc_scores)}")
-    append2file(res_path, ">" * 50)
-
-    step2_csQA_medQA(paraphrased_df, res_path, path_prefix, paraphrase_T)
-    
-    
-
-# ------------------ VQA 实验 ------------------
-def run_vqa(paraphrase_T: float):
-    path_prefix = "results/VQA/SLM_Llama8B/"
-    if not os.path.exists(path_prefix):
-        os.makedirs(path_prefix)
-    EXP_NAME = f"\n{REMAIN} Tokens Avoid Generation lowest ppl reference ICL Experiment:"
-    
-    epsilon = 2 * SENSITIVITY / paraphrase_T
-    model.clip_model(epsilon=epsilon, clip_type="all_clip")
-
-    # 加载 VQA 数据集（docvqa 1200 例子）
-    data = load_dataset("nielsr/docvqa_1200_examples_donut")
-    test_df = data["test"].to_pandas().head(TEST_SIZE)
-    paraphrased_df = pd.DataFrame()
-    paraphrased_df['original_question'] = test_df['query'].apply(lambda x: x['en'])
-    paraphrased_df["original_answer"] = test_df["answers"]
-    paraphrased_df['words'] = test_df['words']
-
-    for temp in TEMPERATURE_LIST:
-        paraphrased_df[f"T_{temp}"] = paraphrased_df['original_question'].apply(
-            lambda x: question_paraphrase(x)
-        )
-
-    for i in range(len(paraphrased_df)):
-        tot_len = sum(len(paraphrased_df.loc[i][f"T_{temp}"]) for temp in TEMPERATURE_LIST)
-        if tot_len == 0:
-            paraphrased_df.drop(i, inplace=True)
-            append2file(os.path.join(path_prefix, f"res_{paraphrase_T}.txt"), f"row {i}: empty!!")
-    paraphrased_df.reset_index(drop=True, inplace=True)
-
-    references = paraphrased_df["original_question"].tolist()
-    rouge1_scores, rouge2_scores, rougeL_scores, rougeLSum_scores = [], [], [], []
-    bleu_scores = []
-    for temp in TEMPERATURE_LIST:
-        predictions = paraphrased_df[f"T_{temp}"].tolist()
-        score = rouge_metric.compute(references=references, predictions=predictions)
-        rouge1_scores.append(score["rouge1"])
-        rouge2_scores.append(score["rouge2"])
-        rougeL_scores.append(score["rougeL"])
-        rougeLSum_scores.append(score["rougeLsum"])
-        bleu_score = bleu_metric.compute(references=references, predictions=predictions)
-        bleu_scores.append(bleu_score["bleu"])
-    res_path = os.path.join(path_prefix, f"res_{paraphrase_T}_{epsilon}.txt")
-    append2file(res_path, EXP_NAME)
-    append2file(res_path, f"Paraphrase T: {paraphrase_T}")
-    append2file(res_path,
-                f"Question paraphrased S1: rouge1 mean: {np.mean(rouge1_scores)}; rouge2 mean: {np.mean(rouge2_scores)}; "
-                f"rougeL mean: {np.mean(rougeL_scores)}; rougeLSum mean: {np.mean(rougeLSum_scores)}")
-    append2file(res_path,
-                f"rouge1 std: {np.std(rouge1_scores)}; rouge2 std: {np.std(rouge2_scores)}; "
-                f"rougeL std: {np.std(rougeL_scores)}; rougeLSum std: {np.std(rougeLSum_scores)}")
-    append2file(res_path, f"bleu mean: {np.mean(bleu_scores)}")
-    append2file(res_path, f"bleu std: {np.std(bleu_scores)}")
-
-    df_file_path = os.path.join(path_prefix, f"paraphrased_questions_T{paraphrase_T}.json")
-    paraphrased_df.to_json(df_file_path, orient="records")
-    paraphrased_df = pd.read_json(df_file_path, orient="records")
-
-    gt_answer = []
-    for i in range(len(paraphrased_df)):
-        ans = ""
-        for word in paraphrased_df.loc[i]["original_answer"]:
-            ans += word + ", "
-        ans = ans[:-2]
-        gt_answer.append(ans)
-    print(gt_answer)
-
-    rouge1_a_scores, rouge2_a_scores, rougeL_a_scores, rougeLSum_a_scores = [], [], [], []
-    bleu_a_scores = []
-    for temp in TEMPERATURE_LIST:
-        T_predictions = []
-        for i in range(len(paraphrased_df)):
-            prompt = build_answer_prompt_vqa(paraphrased_df, i, temp)
-            T_predictions.append(generate(prompt, temperature=0.0, stop=["\n"]))
-        score = rouge_metric.compute(references=gt_answer, predictions=T_predictions)
-        rouge1_a_scores.append(score["rouge1"])
-        rouge2_a_scores.append(score["rouge2"])
-        rougeL_a_scores.append(score["rougeL"])
-        rougeLSum_a_scores.append(score["rougeLsum"])
-        bleu_score = bleu_metric.compute(
-            references=gt_answer, predictions=T_predictions
-        )
-        bleu_a_scores.append(bleu_score["bleu"])
-
-        append2file(res_path, f"Answer paraphrased S1:")
-        append2file(
-            res_path,
-            f"rouge1 mean: {np.mean(rouge1_a_scores)}; rouge2 mean: {np.mean(rouge2_a_scores)}; rougeL mean: {np.mean(rougeL_a_scores)}; rougeLSum mean: {np.mean(rougeLSum_a_scores)}",
-        )
-        append2file(
-            res_path,
-            f"rouge1 std: {np.std(rouge1_a_scores)}; rouge2 std: {np.std(rouge2_a_scores)}; rougeL std: {np.std(rougeL_a_scores)}; rougeLSum std: {np.std(rougeLSum_a_scores)}",
-        )
-        append2file(res_path, f"bleu mean: {np.mean(bleu_a_scores)}")
-        append2file(res_path, f"bleu std: {np.std(bleu_a_scores)}")
-        append2file(res_path, ">" * 50)
-
-    step2_vqa(paraphrased_df, res_path, path_prefix, paraphrase_T)
-
-
-
 def step2_vqa(paraphrased_df:pd.DataFrame, res_path, path_prefix, paraphrase_T):
     questions_gt_list = paraphrased_df["original_question"].tolist()
     answers_gt_list = paraphrased_df["original_answer"].tolist()
     paraphrased_df = paraphrased_df.fillna(" ")
     
     # unclip model
-    model = SLM(MODEL_NAME)
     model.unclip_model()
     
     import nltk
@@ -656,7 +345,6 @@ def step2_csQA_medQA(paraphrased_df:pd.DataFrame, res_path, path_prefix, paraphr
     answers_gt_list = convert_ABCDE(answers_gt_list)
     
     # unclip model
-    model = SLM(MODEL_NAME)
     model.unclip_model()
     
     import nltk
@@ -903,29 +591,55 @@ def step2_csQA_medQA(paraphrased_df:pd.DataFrame, res_path, path_prefix, paraphr
     paraphrased_df.to_json(f"{path_prefix}fin_T{paraphrase_T}.json", orient="records")
 
 
-# ------------------ 主程序入口 ------------------
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description="Run GPT35 experiments for csQA, medQA, or VQA")
-    # parser.add_argument("--dataset", type=str, required=True, choices=["csQA", "medQA", "VQA"],
-    #                     help="Dataset type to run (csQA, medQA, VQA)")
-    # parser.add_argument("--paraphrase_T", type=float, default=0,
-    #                     help="Paraphrase T value (e.g. 0, 0.25, etc.)")
-    # args = parser.parse_args()
 
-    # dataset_list = ["csQA", "medQA", "VQA"]
-    dataset_list = ["medQA", "VQA"]
-    paraphrase_T_list = [0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
 
-    for dataset in dataset_list:
-        DATASET_TYPE = dataset
-        for paraphrase_T in paraphrase_T_list:
-            if dataset == "csQA":
-                run_csqa(paraphrase_T)
-            elif dataset == "medQA":
-                run_medqa(paraphrase_T)
-            elif dataset == "VQA":
-                run_vqa(paraphrase_T)
-            else:
-                print("Invalid dataset type!")
-            torch.cuda.empty_cache()
-            gc.collect()
+
+
+def process_paraphrased_questions(folder):      # folder: results/VQA/SLM_Llama8B/
+    # 构造匹配所有 paraphrased_questions_T{xxx}.json 文件的模式
+    pattern = os.path.join(folder, 'paraphrased_questions_T*.json')
+    # 使用 glob 获取所有匹配的文件路径
+    file_list = glob.glob(pattern)
+    
+    # 遍历所有匹配的文件
+    for file_path in file_list:
+        # 提取文件名中的 xxx 作为 file_order
+        filename = os.path.basename(file_path)
+        match = re.search(r'paraphrased_questions_T(\d+(?:\.\d+)?)\.json', filename)
+        if not match:
+            print(f"无法从文件名 {filename} 中提取 file_order")
+            continue
+        
+        file_order = match.group(1)
+        file_order = float(file_order)
+        
+        # 使用 pandas 读取 json 文件，返回 DataFrame 格式
+        try:
+            df = pd.read_json(file_path)
+            # ================================ Test ================================
+            # df = df.head(2)
+            # ================================ Test ================================
+        except ValueError as e:
+            print(f"读取 {file_path} 出现错误: {e}")
+            continue
+        res_path = os.path.join(folder, f"res_{file_order}.txt")
+        if 'VQA' in folder:
+            DATASET_TYPE = "VQA"
+            step2_vqa(df, res_path, path_prefix=f"{folder}s2_", paraphrase_T=file_order)
+        else:
+            if 'csQA' in folder:
+                DATASET_TYPE = "csQA"
+            elif 'medQA' in folder:
+                DATASET_TYPE = "medQA"
+            step2_csQA_medQA(df, res_path, path_prefix=f"{folder}s2_", paraphrase_T=file_order)
+    
+
+
+# ================================ Test ================================
+# paths = ['results/VQA/SLM_Llama8B/', 'results/csQA/SLM_Llama8B/']#, 'results/medQA/SLM_Llama8B/']
+# ================================ Test ================================
+paths = ['results/csQA/SLM_Llama8B/', 'results/VQA/SLM_Llama8B/', 'results/medQA/SLM_Llama8B/']
+
+
+for path in paths:
+    process_paraphrased_questions(path)

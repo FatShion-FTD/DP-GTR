@@ -236,6 +236,10 @@ class SLM:
         self.logits_processor = LogitsProcessorList([ClipLogitsProcessor(self.min_logit, self.max_logit)])
         self.set_config(temperature=temperature, logits_processor=self.logits_processor)
         
+    def unclip_model(self):
+        """Reset the model's logits clipping configuration."""
+        self.set_config(logits_processor=None, temperature=1e-3)
+        
 
     def set_config(self, **kwargs):
         """Update generation configuration with custom parameters."""
@@ -323,16 +327,17 @@ if __name__ == "__main__":
     model_name = "meta-llama/Llama-3.1-8B-Instruct" #"meta-llama/Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-1B"
     model = SLM(model_name)
     tokens_list = ['A', 'B', 'C', 'D', 'E']     # [32, 33, 34, 35, 36]
-    token_ids = model.get_tokenid(tokens_list)
+    # token_ids = model.get_tokenid(tokens_list)
     # print(f"Model: {model_name}, Token IDs: {token_ids}")
-    model.clip_model(epsilon=100, clip_type="all_clip")
-    print(model.sensitivity)
-    
+    # model.clip_model(epsilon=100, clip_type="all_clip")
+    # print(model.sensitivity)
+    model.unclip_model()
+    print(f"Current Config: {model.get_config()}")
     # print(f"Current Config: {model.get_config()}")
-    # text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
-    # paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
-    # paraphrased_text = model.clean_text(paraphrased_text, text)
-    # print(f"Paraphrased Text: {paraphrased_text}")
+    text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
+    paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
+    paraphrased_text = model.clean_text(paraphrased_text, text)
+    print(f"Paraphrased Text: {paraphrased_text}")
     
     # fobidden_words = ['door', 'revolving', 'travel']
     # suggest_tokens = ""
