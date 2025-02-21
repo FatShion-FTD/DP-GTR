@@ -1,3 +1,6 @@
+# Import from: https://github.com/sjmeis/DPMLM/blob/main/DPMLM.py under MIT License
+# Thank you for open source!
+
 import os
 import torch
 import nltk
@@ -535,10 +538,6 @@ class DPMLM():
 if __name__ == '__main__':
     dpmlm = DPMLM()
     sentence = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
-    # epsilon = 500
-    # print(dpmlm.dpmlm_rewrite(sentence, epsilon, REPLACE=True, FILTER=True, STOP=True, TEMP=True, POS=True, CONCAT=True))
-    # print(dpmlm.dpmlm_rewrite_plus(sentence, epsilon, FILTER=True, TEMP=True, POS=True, CONCAT=True, ADD_PROB=0.15, DEL_PROB=0.05))
-    
     epsilons_list = [160,80,54,40,32,27]        # 20 * 2
     for eps in epsilons_list:
         output, _, _ = dpmlm.dpmlm_rewrite(sentence, eps, REPLACE=True, FILTER=True, STOP=True, TEMP=True, POS=True, CONCAT=True)

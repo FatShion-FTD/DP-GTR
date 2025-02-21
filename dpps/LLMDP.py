@@ -1,4 +1,5 @@
-# class code for LLM-based Differential Privacy mechanisms
+# Import from: https://github.com/sjmeis/DPMLM/blob/main/LLMDP.py under MIT License
+# Thank you for open source!
 
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, AutoModelForCausalLM, LogitsProcessor, LogitsProcessorList, pipeline
 from transformers import BartTokenizer, BartModel, BartForConditionalGeneration

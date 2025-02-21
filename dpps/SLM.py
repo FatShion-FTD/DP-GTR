@@ -8,27 +8,14 @@ from transformers import (
     LogitsProcessorList
 )
 
-# class ClipLogitsProcessor(LogitsProcessor):
-#   def __init__(self, min=-100, max=100):
-#     self.min = min
-#     self.max = max
-
-#   def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-#     scores = torch.clamp(scores, min=self.min, max=self.max)
-#     return scores
-
 class ClipLogitsProcessor(LogitsProcessor):
-    def __init__(self, min_val=-100, max_val=100, beta=0.1):
-        self.min_val = min_val
-        self.max_val = max_val
-        self.center = (min_val + max_val) / 2.0
-        self.half_range = (max_val - min_val) / 2.0
-        self.beta = beta
+  def __init__(self, min=-100, max=100):
+    self.min = min
+    self.max = max
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        new_scores = self.center + self.half_range * torch.tanh((scores - self.center) * self.beta)
-        return new_scores
-
+  def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    scores = torch.clamp(scores, min=self.min, max=self.max)
+    return scores
 
 
 class StopOnToken(StoppingCriteria):
@@ -224,8 +211,8 @@ class SLM:
         std = model_config[clip_type]["std"]
 
         # Calculate min and max logits for clipping
-        self.max_logit = mean + 2 * std
-        self.min_logit = mean - 2 * std
+        self.max_logit = mean + 4 * std
+        self.min_logit = mean
         
 
         # Calculate sensitivity and set temperature
@@ -274,6 +261,11 @@ class SLM:
     def clean_text(self, text, input_text):
         """Clean the generated text by removing the input_text."""
         return text.replace(input_text, "").replace(input_text.strip(), "")
+    
+    def generate_clean(self, input_text, ref_text=None):
+        output_text = self.generate(input_text, ref_text)['output_text']
+        clean_text = self.clean_text(output_text, input_text)
+        return clean_text
 
     def check_logits(self, output_ids):
         """Check and return the mean logits for each step of the generation."""
@@ -304,85 +296,14 @@ class SLM:
         
 
 if __name__ == "__main__":
-    
-    # model_name_list = [
-    #     "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    #     "meta-llama/Llama-3.2-1B",
-    #     "EleutherAI/gpt-neo-1.3B",
-    #     "HuggingFaceTB/SmolLM-1.7B",
-    #     "facebook/opt-1.3b",
-    #     "Qwen/Qwen2-1.5B",
-    #     "meta-llama/Llama-3.2-3B",
-    #     "EleutherAI/pythia-1.4b",
-    #     "ahxt/LiteLlama-460M-1T",
-    # ]
-    
-    # tokens_list = ['A', 'B', 'C', 'D', 'E']
-    
-    # for model_name in model_name_list:
-    #     model = SLM(model_name)
-    #     token_ids = model.get_tokenid(tokens_list)
-    #     print(f"Model: {model_name}, Token IDs: {token_ids}")
-    
     model_name = "meta-llama/Llama-3.1-8B-Instruct" #"meta-llama/Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-1B"
     model = SLM(model_name)
     tokens_list = ['A', 'B', 'C', 'D', 'E']     # [32, 33, 34, 35, 36]
-    # token_ids = model.get_tokenid(tokens_list)
-    # print(f"Model: {model_name}, Token IDs: {token_ids}")
-    # model.clip_model(epsilon=100, clip_type="all_clip")
-    # print(model.sensitivity)
+
     model.unclip_model()
     print(f"Current Config: {model.get_config()}")
-    # print(f"Current Config: {model.get_config()}")
     text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
     paraphrased_text = model.generate(f"Paraphrase the following question:\n{text}\nParaphrased Question:\n", text)['output_text']
     paraphrased_text = model.clean_text(paraphrased_text, text)
     print(f"Paraphrased Text: {paraphrased_text}")
-    
-    # fobidden_words = ['door', 'revolving', 'travel']
-    # suggest_tokens = ""
-    # for token in fobidden_words:
-    #     suggest_tokens += token + ", "
-    # suggest_tokens = suggest_tokens[:-2]
-    # icl_prompt = (
-    #             "Refer the following question to generate a new question:\n"
-    #             + paraphrased_text
-    #             + "\nAvoid using following tokens:\n"
-    #             + suggest_tokens
-    #             + "\nGenerated question:\n"
-    #         )
-    # print(f"ICL Prompt: {icl_prompt}")
-    # fin_questions = model.generate(icl_prompt, icl_prompt)['output_text']
-    # fin_questions = model.clean_text(fin_questions, icl_prompt)
-    # print(f"Final Question: {fin_questions}")
 
-    
-
-    # # Configure the generation
-    # tiny_llama.set_config(temperature=1.0, max_new_tokens=100)
-    # print("Current Config:", tiny_llama.get_config())
-    # tiny_llama.clip_model()
-    # print(f"Clipped Config {tiny_llama.get_config()}")
-
-    # # Input text
-    # input_text = "Paraphrase the following question:\nA revolving door is convenient for two direction travel, but it also serves as a security measure at a what?\nParaphrased Question:\n"
-    # pure_text = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
-
-    # # Generate text
-    # result = tiny_llama.generate(input_text, pure_text=pure_text)
-    # print("Generated Text:", result["output_text"])
-
-    # # Check logits
-    # all_logits = tiny_llama.check_logits(result["output_ids"])
-    # all_selected_token_logits = tiny_llama.check_token_logits(result["output_ids"])
-
-    # # Assertions and validation
-    # assert len(all_logits) == len(all_selected_token_logits)
-
-    # input_ids = tiny_llama.tokenizer(input_text, return_tensors="pt").input_ids
-    # input_length = input_ids.shape[-1]
-    # all_logits_length = len(all_logits)
-    # all_length = len(result["output_ids"].sequences[0])
-
-    # print(f"Logits Length: {all_logits_length}, Token Length: {all_length}, Input Length: {input_length}")
-    # assert all_logits_length == all_length - input_length

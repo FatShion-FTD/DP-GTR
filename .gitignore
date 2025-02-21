@@ -174,3 +174,5 @@ results/
 dataset/
 analysis/
 gpt2-paraphraser/
+sync.sh
+OpenAI.json
