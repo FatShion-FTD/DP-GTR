@@ -65,13 +65,13 @@ class GTR:
         if self.releasing_strategy == "ndp":
             filtered_tokens_sorted_ndp = filtered_tokens_sorted[:min(self.remian_tokens, len(filtered_tokens_sorted))]
             released_tokens = [k[0][0] for k in filtered_tokens_sorted_ndp]
-            print(released_tokens)
+            print(f"Final Released PK Tokens:  {released_tokens}")
         elif self.releasing_strategy == "jem":
             item_counts = np.array([count for token, count in filtered_tokens_sorted])
             joint_out = joint(item_counts, k=min(self.remian_tokens, len(item_counts)), epsilon=2, neighbor_type=1)
             filtered_tokens_sorted_jem = np.array(filtered_tokens_sorted, dtype=object)[joint_out]
             released_tokens = [token_tuple[0][0] for token_tuple in filtered_tokens_sorted_jem]
-            print(released_tokens)
+            print(f"Final Released PK Tokens:  {released_tokens}")
         else:
             raise ValueError(f"Unsupported releasing strategy: {self.releasing_strategy}")
         random.shuffle(released_tokens)
@@ -87,6 +87,7 @@ class GTR:
         tmp_df = pd.DataFrame({"Predictions": paraphrase_sentences, "Perplexity": perplexity_res['perplexities']})
         lowest_perplexity_idx = tmp_df["Perplexity"].idxmin()
         reference_question = tmp_df.loc[lowest_perplexity_idx]["Predictions"]
+        print(f"Reference Question:  {reference_question}")
         
         # ========================== Fin Prompt ==========================
         suggest_tokens = ""

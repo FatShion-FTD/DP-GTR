@@ -5,23 +5,17 @@ json_data = json.load(open("OpenAI.json"))
 endpoint = json_data["api_base"]
 api_key = json_data["api_key"]
 api_version = json_data["api_version"]
-api_type = json_data["deployment_name"]
-gpt35 = api_type["GPT3.5"]
+deployment_name = json_data["deployment_name"]["GPT3.5"]
 
-# gets the API Key from environment variable AZURE_OPENAI_API_KEY
 client = AzureOpenAI(azure_endpoint=endpoint, api_key=api_key, api_version=api_version)
-deployment_name = gpt35
 
 def prompt_template(doc):
-    prompt = "Document: {}\nParaphrase of the document:".format(doc)
-    return prompt
+    return f"Document: {doc}\nParaphrase of the document:"
 
-def dp_paraphrase(input, **kwargs):
-    prompt = prompt_template(input)
-    response = generate(prompt, **kwargs)
-    return response
-    
-
+def dp_paraphrase(text, **kwargs):
+    prompt = prompt_template(text)
+    return generate(prompt, **kwargs)
+     
 def generate(
     content,
     temperature=0.0,
@@ -36,33 +30,36 @@ def generate(
     if print_output:
         print(content)
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    ans = None
     try:
         args = {
-            "model": deployment_name,
-            "prompt": content,
+            "model": deployment_name,  
+            "messages": [{"role": "user", "content": content}],
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-
-        if logits_dict != None:
+        if logits_dict is not None:
             args["logit_bias"] = logits_dict
-        if top_p != None:
+        if top_p is not None:
             args["top_p"] = top_p
-        if frequency_penalty != None:
+        if frequency_penalty is not None:
             args["frequency_penalty"] = frequency_penalty
-        if presence_penalty != None:
+        if presence_penalty is not None:
             args["presence_penalty"] = presence_penalty
-        if stop != None:
+        if stop is not None:
             args["stop"] = stop
 
-        response = client.completions.create(**args)
-        ans = response.choices[0].text
+        response = client.chat.completions.create(**args)
+        ans = response.choices[0].message.content
         if print_output:
-            print(f"{response.choices[0].text}")
+            print(ans)
     except Exception as e:
         ans = ""
         print(f"Error: {e}")
     if print_output:
         print("========================================")
     return ans
+
+if __name__ == "__main__":
+    input_text = "In which year, john f. kennedy was assassinated?"
+    rewrites = dp_paraphrase(input_text, temperature=1.0)
+    print(rewrites)

@@ -20,16 +20,19 @@ DP-GTR is a three-stage differentially private prompt protection framework desig
 2. Define your own dp paraphrase function and call the gtr to Group Text Rewrite the input text.
 ```python
 from GTR import GTR
-from openai_generation import dp_paraphrase, generation
+from openai_generation import dp_paraphrase, generate
 gtr = GTR()
-text = "In which year, john f. kennedy was assassinated?"
-rewrites = GTR.gtr(text, dp_paraphrase)
+input_text = "In which year, john f. kennedy was assassinated?"
+rewrites = gtr.gtr(input_text, dp_paraphrase, temperature=1.0)
+print(rewrites)
 ```
 
 3. Build final prompt from contextual rewrites.
 ```python
-final_prompt = GTR.icl(rewrites, generation)
+final_prompt = gtr.icl(rewrites, generate)
 ```
+
+See the `test.ipynb` for more details.
 
 ## DP-GTR parameters
 - `num_rewrites`: The number of rewrites to generate.
@@ -45,3 +48,5 @@ slm = SLM("meta-llama/Llama-3.1-8B-Instruct")
 
 text = slm.generate_clean(input_text=prompt_template(text), ref_text=text)
 ```
+
+Use `slm.clip_model()` to clip the model's sensitivity bound before rewritting.
