@@ -66,14 +66,3 @@ def generate(
     if print_output:
         print("========================================")
     return ans
-
-
-def openAI_generate_parallel_df(df, df_field, temperature, save_path=None):
-    translated_df = df[df_field].parallel_apply(
-        lambda x: generate(
-            content=f"Review: {x}\nParaphrase of the review:", temperature=temperature
-        )
-    )
-    if save_path != None:
-        translated_df.to_csv(save_path, index=False)
-    return translated_df

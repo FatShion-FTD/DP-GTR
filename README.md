@@ -1,7 +1,7 @@
 # The code repo for DP-GTR 
 DP-GTR is a three-stage differentially private prompt protection framework designed to safeguard text inputs in client-side applications. Leveraging our novel Group Text Rewriting (GTR) mechanism, \modelname seamlessly bridges local and global differential privacy (DP) paradigms, enabling the integration of diverse DP techniques for superior privacy-utility tradeoffs.
 
-![framework](framework.png)
+![framework](assets/framework.png)
 
 ## How to use
 1. Setup the OpenAI API keys. (We use Azure OpenAI API)
@@ -12,7 +12,7 @@ DP-GTR is a three-stage differentially private prompt protection framework desig
     "api_type": "azure",
     "api_version": "",
     "deployment_name": {
-        "GPT3.5": "GPT35",  // The deployment name for GPT3.5
+        "GPT3.5": "GPT35", 
     }
 }
 ```

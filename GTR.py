@@ -38,7 +38,7 @@ class GTR:
             tokens = nltk.word_tokenize(rewrite)
             onegrams = set(ngrams(tokens, 1))
             for token in onegrams:
-                # only add one gram for one sentence
+                # only add one gram per sentence
                 if token in all_tokens:
                     all_tokens[token] += 1
                 else:

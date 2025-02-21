@@ -363,9 +363,3 @@ if __name__ == "__main__":
     suggest_tokens = ", ".join(token_list)
     print(suggest_tokens)
     print(len(suggest_tokens))
-
-    # filtered_tokens_sorted = sorted(filtered_tokens.items(), key=lambda x: x[1], reverse=True)
-    # item_counts = np.array([count for token, count in filtered_tokens_sorted])
-    # joint_out = joint(item_counts, k=min(10, len(item_counts)), epsilon=eps, neighbor_type=1)
-    # filtered_tokens = np.array(filtered_tokens_sorted, dtype=object)[joint_out]
-    # filtered_tokens = [token_tuple[0][0] for token_tuple in filtered_tokens]

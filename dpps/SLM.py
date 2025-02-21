@@ -255,7 +255,6 @@ class SLM:
             **inputs, stopping_criteria=self.stopping_criteria, **self.generation_config
         )
         output_text = self.tokenizer.decode(output_ids.sequences[0], skip_special_tokens=True)
-        # output_text = output_text.replace(input_text, "").replace(input_text.strip(), "")
         return {"output_text": output_text, "output_ids": output_ids}
     
     def clean_text(self, text, input_text):
@@ -296,7 +295,7 @@ class SLM:
         
 
 if __name__ == "__main__":
-    model_name = "meta-llama/Llama-3.1-8B-Instruct" #"meta-llama/Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-1B"
+    model_name = "meta-llama/Llama-3.1-8B-Instruct" 
     model = SLM(model_name)
     tokens_list = ['A', 'B', 'C', 'D', 'E']     # [32, 33, 34, 35, 36]
 

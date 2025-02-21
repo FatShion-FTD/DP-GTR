@@ -75,3 +75,32 @@ def append2file(file_path, content):
     with open(file_path, 'a') as f:
         f.write(content)
         f.write('\n')
+        
+        
+        
+def build_answer_prompt_csqa(df: pd.DataFrame, i, t):
+    prompt = ""
+    for idx in range(len(df.loc[i]['choices']['label'])):
+        prompt += df.loc[i]['choices']['label'][idx] + ". " + df.loc[i]['choices']['text'][idx] + "\n"
+    prompt = df.loc[i][f"T_{t}"] + "\nAnswer the question with the following options: \n" + prompt + "Answer Index: "
+    return prompt
+
+def build_answer_prompt_medqa(df: pd.DataFrame, i, t):
+    prompt = ""
+    for k, v in df.loc[i]['choices'].items():
+        prompt += k + ". " + v + "\n"
+    prompt = df.loc[i][f"T_{t}"] + "\nAnswer the question with the following options: \n" + prompt + "Answer Index: "
+    return prompt
+
+def build_answer_prompt_vqa(df: pd.DataFrame, i, t):
+    prompt = ""
+    for word in df.loc[i]["words"]:
+        prompt += word + ", "
+    prompt = (
+        "Extracted OCR tokens from image:\n"
+        + prompt[:-2]
+        + "\nQuestion: "
+        + df.loc[i][f"T_{t}"]
+        + "\nAnswer the question with short term:\n"
+    )
+    return prompt

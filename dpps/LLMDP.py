@@ -249,8 +249,7 @@ class DPBart():
 if __name__ == "__main__":
     print("DPParaphrase")
     question = "A revolving door is convenient for two direction travel, but it also serves as a security measure at a what?"
-    # question = "hello world"
-    
+        
     dp_Paraphrase = DPParaphrase()
     dpp_result = dp_Paraphrase.privatize(question, epsilon=1000)
     print(f"dp_Paraphrase:\n{dpp_result}")
