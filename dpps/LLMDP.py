@@ -1,6 +1,11 @@
-# Import from: https://github.com/sjmeis/DPMLM/blob/main/LLMDP.py under MIT License
-# Thank you for open source!
-
+# Cite from: DP-MLM: Differentially private text rewriting using masked language models
+# @inproceedings{meisenbacher2024dp,
+#   title={DP-MLM: Differentially Private Text Rewriting Using Masked Language Models},
+#   author={Meisenbacher, Stephen and Chevli, Maulik and Vladika, Juraj and Matthes, Florian},
+#   booktitle={Findings of the Association for Computational Linguistics ACL 2024},
+#   pages={9314--9328},
+#   year={2024}
+# }
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, AutoModelForCausalLM, LogitsProcessor, LogitsProcessorList, pipeline
 from transformers import BartTokenizer, BartModel, BartForConditionalGeneration
 from transformers.models.bart.modeling_bart import BartDecoder
@@ -124,6 +129,14 @@ class DPParaphrase():
         # print(fin_text)
         return fin_text
    
+# Cite from: DP-BART for Privatized Text Rewriting under Local Differential Privacy
+# @inproceedings{igamberdiev2023dp,
+#   title={DP-BART for Privatized Text Rewriting under Local Differential Privacy},
+#   author={Igamberdiev, Timour and Habernal, Ivan},
+#   booktitle={Findings of the Association for Computational Linguistics: ACL 2023},
+#   pages={13914--13934},
+#   year={2023}
+# }
 class DPBart():
     model = None
     decoder = None
@@ -151,7 +164,6 @@ class DPBart():
     def clip(self, vector):
         return torch.clip(vector, self.c_min, self.c_max)
 
-    # https://github.com/trusthlt/dp-bart-private-rewriting/
     def calibrateAnalyticGaussianMechanism_precision(self, epsilon, delta, GS, tol = 1.e-12):
         """
         High-precision version of `calibrateAnalyticGaussianMechanism`.

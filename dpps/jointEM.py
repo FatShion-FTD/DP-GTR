@@ -1,6 +1,12 @@
-# Import from https://github.com/tongwu2020/DP-ICL/blob/main/DP_ICL_gen.ipynb under MIT License
-# Thank you for open source!
-
+# Cite from: A Joint Exponential Mechanism For Differentially Private Top-k
+# @inproceedings{gillenwater2022joint,
+#   title={A Joint Exponential Mechanism For Differentially Private Top-$ k$},
+#   author={Gillenwater, Jennifer and Joseph, Matthew and Munoz, Andres and Diaz, Monica Ribero},
+#   booktitle={International Conference on Machine Learning},
+#   pages={7570--7582},
+#   year={2022},
+#   organization={PMLR}
+# }
 import numpy as np
 import itertools
 
@@ -43,12 +49,6 @@ def get_diffs_to_positions(diff_matrix):
       Array a where diff_matrix[a[0][i], a[1][i]] = sorted_diffs[i], where
       sorted_diffs contains all entries of diff_matrix in increasing order.
     """
-    # The below line of the code runs in time O(d * k * log(dk)). This could be
-    # implemented more efficiently, leveraging the fact that diff_matrix is
-    # strictly increasing along rows. This property allows us to use k-way merging
-    # (https://en.wikipedia.org/wiki/K-way_merge_algorithm), which can bring the
-    # runtime down to O(d * k * log(k)). However, since this function is not a
-    # practical bottleneck in the code, we leave it as-is for now.
     return np.unravel_index(np.argsort(diff_matrix, axis=None), diff_matrix.shape)
 
 
@@ -137,11 +137,7 @@ def racing_sample(log_terms):
       log_terms: Array of terms of form log(coefficient) - (exponent term).
 
     Returns:
-      A sample from the exponential distribution determined by terms. See
-      Algorithm 1 from the paper "Duff: A Dataset-Distance-Based
-      Utility Function Family for the Exponential Mechanism"
-      (https://arxiv.org/pdf/2010.04235.pdf) for details; each element of terms is
-      analogous to a single log(lambda(A_k)) - (eps * k/2) in their algorithm.
+      A sample from the exponential distribution determined by terms.
 
     Raises:
       RuntimeError: encountered inf or nan min time.
@@ -195,14 +191,6 @@ def sample_max_expo_distribution(expo_lambda, log_num_trials):
     Raises:
       RuntimeError: result contains inf or nan.
     """
-    # Rather than actually sampling from the exponential distribution num_trials
-    # times and taking the max (an O(num_trials) operation), we can simply draw
-    # from a distribution that directly represents this max (an O(1) operation).
-    # The probability that num_trials independent draws from a distribution are
-    # all <= x is the CDF of that distribution raised to the n-th power.  Hence,
-    # the CDF for the max that we need is the exponential distribution CDF raised
-    # to the n-th power.  Inverting this CDF and plugging in a sample from the
-    # uniform distribution on [0, 1] gives the desired max.
     num_results = len(log_num_trials)
     # The below line is more numerically stable than 1 / np.exp(log_num_trials).
     inverse_num_trials = np.exp(-log_num_trials)
@@ -241,14 +229,6 @@ def sample_diff_idx_via_pnf(log_diff_counts, sorted_diffs, epsilon, sensitivity)
     # Exclude entries with a count of zero.
     nonzero_count_indicator = ~np.isneginf(log_diff_counts)
 
-    # Permute-and-flip is identical to report-noisy-max with exponential noise;
-    # see the paper "The Permute-and-Flip Mechanism Is Identical to
-    # Report-Noisy-Max with Exponential Noise"
-    # (https://arxiv.org/pdf/2105.07260.pdf) for details.  The latter formulation
-    # is simpler to implement efficiently, so that is what we use internally here.
-    # Specifically, we draw a max noise value for each of the utility values (the
-    # diffs), and add this max to the utility.  We then return the index where
-    # this results in the largest noisy utility value.
     utilities = -np.floor(sorted_diffs[nonzero_count_indicator])
     noisy_utilities = utilities + sample_max_expo_distribution(
         expo_lambda, log_diff_counts[nonzero_count_indicator]
