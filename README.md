@@ -49,4 +49,35 @@ slm = SLM("meta-llama/Llama-3.1-8B-Instruct")
 text = slm.generate_clean(input_text=prompt_template(text), ref_text=text)
 ```
 
-Use `slm.clip_model()` to clip the model's sensitivity bound before rewritting.
+Use `slm.clip_model()` to clip the model's sensitivity bound before rewriting.
+
+# Examples
+Document: 
+```
+In which year, john f. kennedy was assassinated?
+```
+10 DP-guaranted paraphrase:
+```
+In what year was John F. Kennedy killed?
+What year was John F. Kennedy assassinated?
+During which year did John F. Kennedy get assassinated?
+In what year was John F. Kennedy killed?
+What year did John F. Kennedy get assassinated?
+In what year was John F. Kennedy killed?
+What year did John F. Kennedy get assassinated?
+In what year was John F. Kennedy killed?
+What year did John F. Kennedy get shot?
+In what year did John F. Kennedy get killed?
+```
+**Private keywords**:
+```
+What, get, Kennedy, killed, In, John, assassinated, F., year, During
+```
+**Reference**:
+```
+What year was John F. Kennedy assassinated?
+```
+**Final Prompt**:
+```
+When did the tragic event occur involving the 35th President of the United States?
+```
